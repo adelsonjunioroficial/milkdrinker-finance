@@ -16,7 +16,7 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 <!-- INSTRUÇÃO: Substitua o texto "link_da_imagem_aqui.png" pelo caminho da sua imagem no repositório. Exemplo: "docs/img/menu.png" -->
 
 ### Menu Principal
-![Menu Principal]([link_da_imagem_aqui.png](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Menu_Principal.png))
+![Menu Principal](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Menu_Principal.png)
 > Central de navegação do usuário.
 
 ### Dashboard Analítico
