@@ -20,7 +20,8 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 > Central de navegação do usuário.
 
 ### Dashboard Analítico
-![Dashboard Analítico](link_da_imagem_aqui.png)
+![Dashboard Analítico](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Painel_Analitico.png)
+![Dashboard Analítico](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Painel_Analitico_02.png)
 > Motor de consolidação instantânea de totais, saldos e filtros operacionais.
 
 ### Lançamentos Financeiros (Avulsos e Parcelados)
