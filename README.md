@@ -50,7 +50,7 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 
 ## Como Executar
 
-1. Faça o download do arquivo `MilkDrinker_v1.1.xlsm`.
+1. Faça o download do arquivo [`MilkDrinker_v1.1.xlsm`](https://github.com/adelsonjunioroficial/milkdrinker-finance/raw/refs/heads/main/MilkDrinker-Cash_Cow_Financev1.1.xlsm).
 2. Abra o arquivo no Microsoft Excel.
 3. Aceite o aviso de segurança do Excel clicando em "Habilitar Conteúdo".
 4. A interface das planilhas será automaticamente ocultada e o sistema inicializará no Menu Principal.
