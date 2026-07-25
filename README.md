@@ -20,15 +20,15 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 > Central de navegação do usuário.
 
 ### Dashboard Analítico
-![Dashboard Analítico](link_da_imagem_aqui.png)
+![Dashboard Analítico](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Painel_Analitico04.png)
 > Motor de consolidação instantânea de totais, saldos e filtros operacionais.
 
 ### Lançamentos Financeiros (Avulsos e Parcelados)
-![Lançamentos Financeiros](link_da_imagem_aqui.png)
+![Lançamentos Financeiros](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Lancamentos_Financeiros_02.png)
 > Interface paginada para captura de receitas e despesas.
 
 ### Gerenciamento de Categorias
-![Gerenciamento de Categorias](link_da_imagem_aqui.png)
+![Gerenciamento de Categorias](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/04_Imagens/Gerenciamento_Categoria.png)
 > Painel de edição e exclusão condicional de tabelas dimensão.
 
 ---
@@ -50,7 +50,7 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 
 ## Como Executar
 
-1. Faça o download do arquivo `MilkDrinker_v1.1.xlsm`.
+1. Faça o download do arquivo [`MilkDrinker_v1.1.xlsm`](https://github.com/adelsonjunioroficial/milkdrinker-finance/raw/refs/heads/main/MilkDrinker-Cash_Cow_Financev1.1.xlsm).
 2. Abra o arquivo no Microsoft Excel.
 3. Aceite o aviso de segurança do Excel clicando em "Habilitar Conteúdo".
 4. A interface das planilhas será automaticamente ocultada e o sistema inicializará no Menu Principal.
@@ -61,7 +61,7 @@ O banco de dados foi estruturado seguindo as melhores práticas de modelagem rel
 
 Para detalhes aprofundados sobre a arquitetura de tabelas e mapeamento das colunas, consulte a documentação estrutural do projeto:
 
-* [Dicionário de Dados](link_para_seu_dicionario.pdf)
-* [Manual de Operações do Usuário](link_para_seu_manual.pdf)
+* [Dicionário de Dados](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/01_Documentacao/Documenta%C3%A7%C3%A3o%20T%C3%A9cnica_MilkDrinker.pdf)
+* [Manual de Operações do Usuário](https://github.com/adelsonjunioroficial/milkdrinker-finance/blob/main/01_Documentacao/Manual_de_Opera%C3%A7%C3%B5es_do_Usu%C3%A1rio_MilkDrinker%20v1.1.pdf)
 
 > Desenvolvido como portfólio de programação VBA e modelagem de dados no Microsoft Excel.
