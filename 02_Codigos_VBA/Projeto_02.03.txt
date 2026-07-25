@@ -1,0 +1,160 @@
+Option Explicit
+
+' Ao abrir o formulário, carrega as categorias disponíveis
+Private Sub UserForm_Initialize()
+    With Me.cboCategoria
+        .Clear
+        .AddItem "Pagador"
+        .AddItem "Forma de Pagamento"
+        .AddItem "Tipo de Despesa"
+        .AddItem "Tipo de Receita"
+    End With
+End Sub
+
+' Quando a Categoria muda, atualiza a lista de Itens
+Private Sub cboCategoria_Change()
+    Dim ws As Worksheet
+    Dim nomeAba As String
+    Dim ultimaLinha As Long
+    Dim i As Long
+    
+    Me.cboItem.Clear
+    Me.txtNovoNome.Text = ""
+    
+    Select Case Me.cboCategoria.Value
+        Case "Pagador": nomeAba = "dPagador"
+        Case "Forma de Pagamento": nomeAba = "dPagamento"
+        Case "Tipo de Despesa": nomeAba = "dTipoDespesa"
+        Case "Tipo de Receita": nomeAba = "dTipoReceita"
+        Case Else: Exit Sub
+    End Select
+    
+    Set ws = ThisWorkbook.Sheets(nomeAba)
+    ultimaLinha = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 2 To ultimaLinha
+        If Trim(ws.Cells(i, 1).Value) <> "" Then
+            Me.cboItem.AddItem ws.Cells(i, 1).Value
+        End If
+    Next i
+End Sub
+
+' Ao selecionar um item na lista, preenche o campo de Novo Nome
+Private Sub cboItem_Change()
+    Me.txtNovoNome.Text = Me.cboItem.Value
+End Sub
+
+' BOTÃO ALTERAR: Atualiza o nome do item na tabela dimensão
+Private Sub btnAlterar_Click()
+    Dim ws As Worksheet
+    Dim nomeAba As String
+    Dim i As Long
+    
+    If Me.cboCategoria.Value = "" Or Me.cboItem.Value = "" Or Trim(Me.txtNovoNome.Text) = "" Then
+        MsgBox "Selecione uma categoria, um item e digite o novo nome.", vbExclamation, "Atenção"
+        Exit Sub
+    End If
+    
+    nomeAba = MapearAba(Me.cboCategoria.Value)
+    Set ws = ThisWorkbook.Sheets(nomeAba)
+    
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        If UCase(Trim(ws.Cells(i, 1).Value)) = UCase(Trim(Me.cboItem.Value)) Then
+            ws.Cells(i, 1).Value = Trim(Me.txtNovoNome.Text)
+            ThisWorkbook.Save
+            MsgBox "Item alterado com sucesso!", vbInformation, "Sucesso"
+            Call cboCategoria_Change ' Recarrega a lista
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+' BOTÃO EXCLUIR: Verifica integridade nas tabelas Fato antes de deletar
+Private Sub btnExcluir_Click()
+    Dim nomeAba As String
+    Dim itemParaDeletar As String
+    Dim emUso As Boolean
+    Dim ws As Worksheet
+    Dim i As Long
+    
+    If Me.cboCategoria.Value = "" Or Me.cboItem.Value = "" Then
+        MsgBox "Selecione a categoria e o item que deseja excluir.", vbExclamation, "Atenção"
+        Exit Sub
+    End If
+    
+    itemParaDeletar = Me.cboItem.Value
+    
+    ' 1. Mapeia se o item está em uso nas Tabelas Fato
+    emUso = ItemEmUsoNasFatos(Me.cboCategoria.Value, itemParaDeletar)
+    
+    If emUso Then
+        MsgBox "IMPOSSÍVEL EXCLUIR!" & vbCrLf & vbCrLf & _
+               "O item '" & itemParaDeletar & "' já possui lançamentos vinculados em Despesas ou Receitas.", _
+               vbCritical, "Acesso Negado"
+        Exit Sub
+    End If
+    
+    ' 2. Se não estiver em uso, confirma a exclusão
+    If MsgBox("Tem certeza que deseja excluir o item '" & itemParaDeletar & "'?", vbQuestion + vbYesNo, "Confirmar Exclusão") = vbYes Then
+        nomeAba = MapearAba(Me.cboCategoria.Value)
+        Set ws = ThisWorkbook.Sheets(nomeAba)
+        
+        For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+            If UCase(Trim(ws.Cells(i, 1).Value)) = UCase(Trim(itemParaDeletar)) Then
+                ws.Rows(i).Delete
+                ThisWorkbook.Save
+                MsgBox "Item excluído com sucesso!", vbInformation, "Sucesso"
+                Call cboCategoria_Change ' Recarrega a lista
+                Exit Sub
+            End If
+        Next i
+    End If
+End Sub
+
+' Função auxiliar para verificar se o item existe nas tabelas fato
+Private Function ItemEmUsoNasFatos(categoria As String, item As String) As Boolean
+    Dim wsDespesas As Worksheet, wsReceitas As Worksheet
+    Dim i As Long
+    ItemEmUsoNasFatos = False
+    
+    Set wsDespesas = ThisWorkbook.Sheets("fDespesas")
+    Set wsReceitas = ThisWorkbook.Sheets("fReceitas")
+    
+    ' Checa na tabela fDespesas
+    For i = 2 To wsDespesas.Cells(wsDespesas.Rows.Count, "A").End(xlUp).Row
+        Select Case categoria
+            Case "Pagador"
+                If UCase(Trim(wsDespesas.Cells(i, "E").Value)) = UCase(Trim(item)) Then ItemEmUsoNasFatos = True: Exit Function
+            Case "Forma de Pagamento"
+                If UCase(Trim(wsDespesas.Cells(i, "F").Value)) = UCase(Trim(item)) Then ItemEmUsoNasFatos = True: Exit Function
+            Case "Tipo de Despesa"
+                If UCase(Trim(wsDespesas.Cells(i, "G").Value)) = UCase(Trim(item)) Then ItemEmUsoNasFatos = True: Exit Function
+        End Select
+    Next i
+    
+    ' Checa na tabela fReceitas
+    For i = 2 To wsReceitas.Cells(wsReceitas.Rows.Count, "A").End(xlUp).Row
+        Select Case categoria
+            Case "Pagador"
+                If UCase(Trim(wsReceitas.Cells(i, "D").Value)) = UCase(Trim(item)) Then ItemEmUsoNasFatos = True: Exit Function
+            Case "Tipo de Receita"
+                If UCase(Trim(wsReceitas.Cells(i, "E").Value)) = UCase(Trim(item)) Then ItemEmUsoNasFatos = True: Exit Function
+        End Select
+    Next i
+End Function
+
+' Função para converter Nome Amigável para Nome da Aba
+Private Function MapearAba(cat As String) As String
+    Select Case cat
+        Case "Pagador": MapearAba = "dPagador"
+        Case "Forma de Pagamento": MapearAba = "dPagamento"
+        Case "Tipo de Despesa": MapearAba = "dTipoDespesa"
+        Case "Tipo de Receita": MapearAba = "dTipoReceita"
+    End Select
+End Function
+
+' BOTÃO VOLTAR
+Private Sub btnVoltar_Click()
+    Unload Me
+    frmCadDimensao.Show
+End Sub

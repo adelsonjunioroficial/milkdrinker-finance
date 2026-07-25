@@ -1,0 +1,13 @@
+Option Explicit
+
+Private Sub Workbook_Open()
+    On Error Resume Next
+    ' Oculta os dados dessa pasta
+    ThisWorkbook.Windows(1).Visible = False
+    ' Oculta as planilhas de fundo
+    Application.Visible = False
+    On Error GoTo 0
+    
+    ' Carrega a interface do Menu Principal
+    frmMenuPrincipal.Show
+End Sub

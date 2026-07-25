@@ -1,0 +1,223 @@
+Option Explicit
+
+
+' ==============================================================================
+' INICIALIZAÇÃO DO FORMULÁRIO
+' ==============================================================================
+Private Sub UserForm_Initialize()
+    ' Carrega as listas suspensas das tabelas Dimensão
+    Call CarregarComboBoxes
+    
+    ' Preenche a data de hoje por padrão nos campos de data (editável pelo usuário)
+    Me.txtDataDespesa.Text = Format(Date, "dd/mm/yyyy")
+    Me.txtDataReceita.Text = Format(Date, "dd/mm/yyyy")
+End Sub
+
+' Função para popular as ComboBoxes com base nas abas Dimensão
+Private Sub CarregarComboBoxes()
+    Dim ws As Worksheet
+    Dim i As Long
+    
+    ' --- Pagadores ---
+    Me.cboPagadorDespesa.Clear
+    Me.cboPagadorReceita.Clear
+    Set ws = ThisWorkbook.Sheets("dPagador")
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        If Trim(ws.Cells(i, 1).Value) <> "" Then
+            Me.cboPagadorDespesa.AddItem ws.Cells(i, 1).Value
+            Me.cboPagadorReceita.AddItem ws.Cells(i, 1).Value
+        End If
+    Next i
+    
+    ' --- Formas de Pagamento ---
+    Me.cboPagamentoDespesa.Clear
+    Set ws = ThisWorkbook.Sheets("dPagamento")
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        If Trim(ws.Cells(i, 1).Value) <> "" Then
+            Me.cboPagamentoDespesa.AddItem ws.Cells(i, 1).Value
+        End If
+    Next i
+    
+    ' --- Tipo de Despesa ---
+    Me.cboTipoDespesa.Clear
+    Set ws = ThisWorkbook.Sheets("dTipoDespesa")
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        If Trim(ws.Cells(i, 1).Value) <> "" Then
+            Me.cboTipoDespesa.AddItem ws.Cells(i, 1).Value
+        End If
+    Next i
+    
+    ' --- Tipo de Receita ---
+    Me.cboTipoReceita.Clear
+    Set ws = ThisWorkbook.Sheets("dTipoReceita")
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        If Trim(ws.Cells(i, 1).Value) <> "" Then
+            Me.cboTipoReceita.AddItem ws.Cells(i, 1).Value
+        End If
+    Next i
+End Sub
+
+' ==============================================================================
+' MÁSCARAS AUTOMÁTICAS DE DATA (DD/MM/AAAA)
+' ==============================================================================
+Private Sub txtDataDespesa_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
+    Call AplicarMascaraData(Me.txtDataDespesa, KeyAscii)
+End Sub
+
+Private Sub txtDataReceita_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
+    Call AplicarMascaraData(Me.txtDataReceita, KeyAscii)
+End Sub
+
+Private Sub AplicarMascaraData(ByRef txt As MSForms.TextBox, ByRef KeyAscii As MSForms.ReturnInteger)
+    ' Permite apenas números
+    If KeyAscii < 48 Or KeyAscii > 57 Then
+        KeyAscii = 0
+        Exit Sub
+    End If
+    
+    ' Insere as barras automaticamente
+    If Len(txt.Text) = 2 Or Len(txt.Text) = 5 Then
+        txt.Text = txt.Text & "/"
+        txt.SelStart = Len(txt.Text)
+    End If
+End Sub
+
+' ==============================================================================
+' SALVAR DESPESA
+' ==============================================================================
+Private Sub btnSalvarDespesa_Click()
+    Dim ws As Worksheet
+    Dim proxLinha As Long
+    Dim dtLancamento As Date
+    Dim valorNumerico As Double
+    
+    ' Validações básicas
+    If Trim(Me.txtDescDespesa.Text) = "" Or Trim(Me.txtValorDespesa.Text) = "" Or _
+       Trim(Me.txtDataDespesa.Text) = "" Or Me.cboPagadorDespesa.Value = "" Or _
+       Me.cboPagamentoDespesa.Value = "" Or Me.cboTipoDespesa.Value = "" Then
+        MsgBox "Por favor, preencha todos os campos da Despesa.", vbExclamation, "Atenção"
+        Exit Sub
+    End If
+    
+    ' Validação da Data
+    If Not IsDate(Me.txtDataDespesa.Text) Then
+        MsgBox "Por favor, insira uma data válida (DD/MM/AAAA).", vbExclamation, "Data Inválida"
+        Exit Sub
+    End If
+    dtLancamento = CDate(Me.txtDataDespesa.Text)
+    
+    ' Validação do Valor
+    On Error Resume Next
+    valorNumerico = CDbl(Replace(Me.txtValorDespesa.Text, ".", ","))
+    If Err.Number <> 0 Or valorNumerico <= 0 Then
+        MsgBox "Por favor, insira um valor numérico válido.", vbExclamation, "Valor Inválido"
+        Err.Clear
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
+    ' Gravação na aba fDespesas
+    Set ws = ThisWorkbook.Sheets("fDespesas")
+    proxLinha = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row + 1
+    
+    ' Colunas: Log (A), Descricao (B), Valor (C), Data (D), Pagador (E), Pagamento (F), Tipo (G), Mes (H), Ano (I)
+    ws.Cells(proxLinha, 1).Value = Format(Now, "dd/mm/yyyy hh:mm:ss") ' Data e Hora do Log
+    ws.Cells(proxLinha, 2).Value = Trim(Me.txtDescDespesa.Text)
+    ws.Cells(proxLinha, 3).Value = valorNumerico
+    ws.Cells(proxLinha, 4).Value = dtLancamento
+    ws.Cells(proxLinha, 5).Value = Me.cboPagadorDespesa.Value
+    ws.Cells(proxLinha, 6).Value = Me.cboPagamentoDespesa.Value
+    ws.Cells(proxLinha, 7).Value = Me.cboTipoDespesa.Value
+    ws.Cells(proxLinha, 8).Value = UCase(Left(Format(dtLancamento, "mmmm"), 1)) & Mid(Format(dtLancamento, "mmmm"), 2)
+    ws.Cells(proxLinha, 9).Value = Year(dtLancamento)
+    
+    ThisWorkbook.Save
+    MsgBox "Despesa registrada com sucesso!", vbInformation, "Sucesso"
+    
+    ' Limpa o formulário mantendo a data do dia
+    Call LimparDespesas
+End Sub
+
+Private Sub btnLimparDespesa_Click()
+    Call LimparDespesas
+End Sub
+
+Private Sub LimparDespesas()
+    Me.txtDescDespesa.Text = ""
+    Me.txtValorDespesa.Text = ""
+    Me.txtDataDespesa.Text = Format(Date, "dd/mm/yyyy")
+    Me.cboPagadorDespesa.ListIndex = -1
+    Me.cboPagamentoDespesa.ListIndex = -1
+    Me.cboTipoDespesa.ListIndex = -1
+End Sub
+
+' ==============================================================================
+' SALVAR RECEITA
+' ==============================================================================
+Private Sub btnSalvarReceita_Click()
+    Dim ws As Worksheet
+    Dim proxLinha As Long
+    Dim dtLancamento As Date
+    Dim valorNumerico As Double
+    
+    ' Validações básicas
+    If Trim(Me.txtValorReceita.Text) = "" Or Trim(Me.txtDataReceita.Text) = "" Or _
+       Me.cboPagadorReceita.Value = "" Or Me.cboTipoReceita.Value = "" Then
+        MsgBox "Por favor, preencha todos os campos da Receita.", vbExclamation, "Atenção"
+        Exit Sub
+    End If
+    
+    ' Validação da Data
+    If Not IsDate(Me.txtDataReceita.Text) Then
+        MsgBox "Por favor, insira uma data válida (DD/MM/AAAA).", vbExclamation, "Data Inválida"
+        Exit Sub
+    End If
+    dtLancamento = CDate(Me.txtDataReceita.Text)
+    
+    ' Validação do Valor
+    On Error Resume Next
+    valorNumerico = CDbl(Replace(Me.txtValorReceita.Text, ".", ","))
+    If Err.Number <> 0 Or valorNumerico <= 0 Then
+        MsgBox "Por favor, insira um valor numérico válido.", vbExclamation, "Valor Inválido"
+        Err.Clear
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
+    ' Gravação na aba fReceitas
+    Set ws = ThisWorkbook.Sheets("fReceitas")
+    proxLinha = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row + 1
+    
+    ' Colunas: Log (A), Valor (B), Data (C), Pagador (D), Tipo (E), Mes (F), Ano (G)
+    ws.Cells(proxLinha, 1).Value = Format(Now, "dd/mm/yyyy hh:mm:ss") ' Data e Hora do Log
+    ws.Cells(proxLinha, 2).Value = valorNumerico
+    ws.Cells(proxLinha, 3).Value = dtLancamento
+    ws.Cells(proxLinha, 4).Value = Me.cboPagadorReceita.Value
+    ws.Cells(proxLinha, 5).Value = Me.cboTipoReceita.Value
+    ws.Cells(proxLinha, 6).Value = UCase(Left(Format(dtLancamento, "mmmm"), 1)) & Mid(Format(dtLancamento, "mmmm"), 2)
+    ws.Cells(proxLinha, 7).Value = Year(dtLancamento)
+    
+    ThisWorkbook.Save
+    MsgBox "Receita registrada com sucesso!", vbInformation, "Sucesso"
+    
+    ' Limpa o formulário mantendo a data do dia
+    Call LimparReceitas
+End Sub
+
+Private Sub btnLimparReceita_Click()
+    Call LimparReceitas
+End Sub
+
+Private Sub LimparReceitas()
+    Me.txtValorReceita.Text = ""
+    Me.txtDataReceita.Text = Format(Date, "dd/mm/yyyy")
+    Me.cboPagadorReceita.ListIndex = -1
+    Me.cboTipoReceita.ListIndex = -1
+End Sub
+
+' ==============================================================================
+' FECHAR / VOLTAR
+' ==============================================================================
+Private Sub btnVoltar_Click()
+    Unload Me
+End Sub

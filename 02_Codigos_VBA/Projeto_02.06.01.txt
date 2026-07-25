@@ -1,0 +1,63 @@
+Option Explicit
+
+Private Sub btnLancamentos_Click()
+    Me.Hide
+    frmLancamentos.Show
+    Me.Show
+End Sub
+
+Private Sub btnDashboard_Click()
+    Me.Hide
+    frmDashboard.Show
+    Me.Show
+End Sub
+
+Private Sub btnCadDimensao_Click()
+    Me.Hide
+    frmCadDimensao.Show
+    Me.Show
+End Sub
+
+Private Sub btnEditaDimensao_Click()
+    Me.Hide
+    frmEditaDimensao.Show
+    Me.Show
+End Sub
+
+Private Sub btnExibirExcel_Click()
+    ' 1. Primeiro torna a aplicação Excel visível novamente
+    Application.Visible = True
+    
+    ' 2. Garante que a janela desta pasta esteja visível
+    ThisWorkbook.Windows(1).Visible = True
+    
+    ' 3. Fecha o menu principal para liberar o Excel
+    Unload Me
+    
+    MsgBox "Modo de visualização das planilhas ativado!", vbInformation, "Aviso"
+End Sub
+
+Private Sub btnSair_Click()
+    If MsgBox("Deseja realmente encerrar o sistema?", vbQuestion + vbYesNo, "Sair") = vbYes Then
+        ' Restaura a visibilidade do Excel antes de fechar para não "quebrar" a sessão
+        Application.Visible = True
+        ThisWorkbook.Windows(1).Visible = True
+        
+        ThisWorkbook.Save
+        
+        ' Se houver mais planilhas abertas, fecha apenas esta. Senão, fecha o Excel.
+        If Application.Workbooks.Count > 1 Then
+            ThisWorkbook.Close SaveChanges:=True
+        Else
+            Application.Quit
+        End If
+    End If
+End Sub
+
+' Garante que ao clicar no "X" vermelho do formulário, execute a mesma saída segura
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+    If CloseMode = vbFormControlMenu Then
+        Cancel = True
+        Call btnSair_Click
+    End If
+End Sub

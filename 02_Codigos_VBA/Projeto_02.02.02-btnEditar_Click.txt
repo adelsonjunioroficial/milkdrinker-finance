@@ -1,0 +1,4 @@
+Private Sub btnEditar_Click()
+    Me.Hide
+    frmEditaDimensao.Show
+End Sub

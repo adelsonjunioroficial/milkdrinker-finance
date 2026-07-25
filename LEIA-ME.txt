@@ -1,0 +1,65 @@
+====================================================================
+               MILKDRINKER — CASH COW FINANCE v1.0
+          Sistema Standalone de Gestão Financeira em VBA
+====================================================================
+
+📌 SOBRE O SISTEMA
+--------------------------------------------------------------------
+O MilkDrinker é um sistema financeiro de alta performance construído 
+em VBA sobre uma arquitetura Star Schema (Modelo Estrela). Projetado 
+para rodar como uma aplicação independente, ele oculta a interface 
+nativa do Excel para oferecer uma experiência "app-like" fluida e 
+segura.
+
+🚀 COMO INICIAR A APLICAÇÃO
+--------------------------------------------------------------------
+1. Abra o arquivo: "MilkDrinker — Cash Cow Finance v1.0.xlsm"
+2. Ao ser solicitado, clique em "HABILITAR CONTEÚDO / MACROS".
+3. A interface do sistema (Menu Principal) abrirá automaticamente.
+4. As planilhas do Excel permanecerão ocultas durante o uso.
+
+⚠️ MODO DESENVOLVEDOR (DEV MODE)
+--------------------------------------------------------------------
+Para realizar manutenções, editar estruturas ou visualizar planilhas:
+
+• Como Ativar:
+  No Menu Principal, utilize o botão de "Modo Dev" (ou execute a macro 
+  de alternância no editor VBA) para tornar o Excel visível:
+  -> Application.Visible = True
+
+• Encerramento Seguro:
+  Utilize SEMPRE o botão de fechar/sair interno do sistema. Isso evita 
+  que instâncias ocultas do Excel ("processos fantasmas") fiquem 
+  rodando em segundo plano no Gerenciador de Tarefas do Windows.
+
+📂 ESTRUTURA DO PROJETO
+--------------------------------------------------------------------
+• [Raiz] /
+  ├── MilkDrinker — Cash Cow Finance v1.0.xlsm  <- Arquivo Oficial
+  └── LEIA-ME.txt                               <- Este manual
+
+• 📁 01_Documentacao/
+  Manuais técnicos, esquemas de dados e documentação em Word/PDF.
+
+• 📁 02_Codigos_VBA/
+  Arquivos .txt com backup de código-fonte dos formulários e módulos.
+
+• 📁 03_Historico_Versoes/
+  Pontos de restauração e etapas anteriores de desenvolvimento.
+
+🏗️ ARQUITETURA DE DADOS (STAR SCHEMA)
+--------------------------------------------------------------------
+• Tabelas Fato:
+  - fDespesas, fReceitas
+
+• Tabelas Dimensão:
+  - dPagador, dPagamento, dTipoDespesa, dTipoReceita
+
+• Regras de Integridade:
+  - O sistema possui bloqueio nativo contra exclusão de dimensões que 
+    possuem movimentações atreladas no histórico.
+  - Edições em nomes de categorias disparam atualização em cascata.
+
+====================================================================
+       MilkDrinker v1.0 — Todos os direitos reservados (2026)
+====================================================================

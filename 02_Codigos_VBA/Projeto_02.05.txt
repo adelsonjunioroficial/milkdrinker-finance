@@ -1,0 +1,228 @@
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    ' Carrega as opções de filtro ao abrir a tela
+    Call CarregarFiltros
+    ' Processa e exibe todos os dados sem filtros iniciais
+    Call FiltrarEDashboard
+End Sub
+
+' ==============================================================================
+' POPULAR FILTROS DINÂMICOS
+' ==============================================================================
+Private Sub CarregarFiltros()
+    Dim wsDespesas As Worksheet, wsReceitas As Worksheet, wsPagador As Worksheet
+    Dim i As Long
+    Dim dictAnos As Object
+    Set dictAnos = CreateObject("Scripting.Dictionary")
+    
+    Set wsDespesas = ThisWorkbook.Sheets("fDespesas")
+    Set wsReceitas = ThisWorkbook.Sheets("fReceitas")
+    Set wsPagador = ThisWorkbook.Sheets("dPagador")
+    
+    ' --- Filtro de Mês ---
+    With Me.cboFiltroMes
+        .Clear
+        .AddItem "TODOS"
+        .AddItem "Janeiro"
+        .AddItem "Fevereiro"
+        .AddItem "Março"
+        .AddItem "Abril"
+        .AddItem "Maio"
+        .AddItem "Junho"
+        .AddItem "Julho"
+        .AddItem "Agosto"
+        .AddItem "Setembro"
+        .AddItem "Outubro"
+        .AddItem "Novembro"
+        .AddItem "Dezembro"
+        .Value = "TODOS"
+    End With
+    
+    ' --- Filtro de Ano ---
+    Me.cboFiltroAno.Clear
+    Me.cboFiltroAno.AddItem "TODOS"
+    
+    For i = 2 To wsDespesas.Cells(wsDespesas.Rows.Count, "A").End(xlUp).Row
+        If wsDespesas.Cells(i, "I").Value <> "" Then
+            If Not dictAnos.Exists(wsDespesas.Cells(i, "I").Value) Then
+                dictAnos.Add wsDespesas.Cells(i, "I").Value, True
+            End If
+        End If
+    Next i
+    
+    For i = 2 To wsReceitas.Cells(wsReceitas.Rows.Count, "A").End(xlUp).Row
+        If wsReceitas.Cells(i, "G").Value <> "" Then
+            If Not dictAnos.Exists(wsReceitas.Cells(i, "G").Value) Then
+                dictAnos.Add wsReceitas.Cells(i, "G").Value, True
+            End If
+        End If
+    Next i
+    
+    Dim key As Variant
+    For Each key In dictAnos.Keys
+        Me.cboFiltroAno.AddItem key
+    Next key
+    Me.cboFiltroAno.Value = "TODOS"
+    
+    ' --- Filtro de Pagador ---
+    Me.cboFiltroPagador.Clear
+    Me.cboFiltroPagador.AddItem "TODOS"
+    For i = 2 To wsPagador.Cells(wsPagador.Rows.Count, "A").End(xlUp).Row
+        If Trim(wsPagador.Cells(i, 1).Value) <> "" Then
+            Me.cboFiltroPagador.AddItem wsPagador.Cells(i, 1).Value
+        End If
+    Next i
+    Me.cboFiltroPagador.Value = "TODOS"
+End Sub
+
+' ==============================================================================
+' LÓGICA DE FILTRAGEM, CÁLCULO DOS KPIS E SUMARIZAÇÃO POR PAGAMENTO
+' ==============================================================================
+Private Sub FiltrarEDashboard()
+    Dim wsDespesas As Worksheet, wsReceitas As Worksheet
+    Dim i As Long
+    Dim totReceitas As Double, totDespesas As Double, saldo As Double
+    Dim fAno As String, fMes As String, fPagador As String
+    Dim atendeFiltro As Boolean
+    Dim dtItem As String, descItem As String, pagadorItem As String, formaItem As String
+    Dim valItem As Double
+    
+    ' Dicionário para agrupar totais por Forma de Pagamento
+    Dim dictFormas As Object
+    Set dictFormas = CreateObject("Scripting.Dictionary")
+    
+    Set wsDespesas = ThisWorkbook.Sheets("fDespesas")
+    Set wsReceitas = ThisWorkbook.Sheets("fReceitas")
+    
+    fAno = Me.cboFiltroAno.Value
+    fMes = Me.cboFiltroMes.Value
+    fPagador = Me.cboFiltroPagador.Value
+    
+    totReceitas = 0
+    totDespesas = 0
+    
+    ' Limpa as caixas de exibição
+    Me.lstExtrato.Clear
+    Me.lstResumoPagamento.Clear
+    
+    ' --- 1. PROCESSAR RECEITAS ---
+    For i = 2 To wsReceitas.Cells(wsReceitas.Rows.Count, "A").End(xlUp).Row
+        If wsReceitas.Cells(i, 1).Value <> "" Then
+            atendeFiltro = True
+            
+            If fAno <> "TODOS" And fAno <> "" Then
+                If CStr(wsReceitas.Cells(i, "G").Value) <> fAno Then atendeFiltro = False
+            End If
+            
+            If fMes <> "TODOS" And fMes <> "" Then
+                If UCase(Trim(wsReceitas.Cells(i, "F").Value)) <> UCase(Trim(fMes)) Then atendeFiltro = False
+            End If
+            
+            If fPagador <> "TODOS" And fPagador <> "" Then
+                If UCase(Trim(wsReceitas.Cells(i, "D").Value)) <> UCase(Trim(fPagador)) Then atendeFiltro = False
+            End If
+            
+            If atendeFiltro Then
+                valItem = CDbl(wsReceitas.Cells(i, 2).Value)
+                totReceitas = totReceitas + valItem
+                
+                dtItem = Format(wsReceitas.Cells(i, 3).Value, "dd/mm/yyyy")
+                descItem = wsReceitas.Cells(i, 5).Value
+                pagadorItem = wsReceitas.Cells(i, 4).Value
+                formaItem = "Entrada/Dep."
+                
+                With Me.lstExtrato
+                    .AddItem dtItem
+                    .List(.ListCount - 1, 1) = "Receita"
+                    .List(.ListCount - 1, 2) = descItem
+                    .List(.ListCount - 1, 3) = pagadorItem
+                    .List(.ListCount - 1, 4) = formaItem
+                    .List(.ListCount - 1, 5) = Format(valItem, "R$ #,##0.00")
+                End With
+            End If
+        End If
+    Next i
+    
+    ' --- 2. PROCESSAR DESPESAS ---
+    For i = 2 To wsDespesas.Cells(wsDespesas.Rows.Count, "A").End(xlUp).Row
+        If wsDespesas.Cells(i, 1).Value <> "" Then
+            atendeFiltro = True
+            
+            If fAno <> "TODOS" And fAno <> "" Then
+                If CStr(wsDespesas.Cells(i, "I").Value) <> fAno Then atendeFiltro = False
+            End If
+            
+            If fMes <> "TODOS" And fMes <> "" Then
+                If UCase(Trim(wsDespesas.Cells(i, "H").Value)) <> UCase(Trim(fMes)) Then atendeFiltro = False
+            End If
+            
+            If fPagador <> "TODOS" And fPagador <> "" Then
+                If UCase(Trim(wsDespesas.Cells(i, "E").Value)) <> UCase(Trim(fPagador)) Then atendeFiltro = False
+            End If
+            
+            If atendeFiltro Then
+                valItem = CDbl(wsDespesas.Cells(i, 3).Value)
+                totDespesas = totDespesas + valItem
+                
+                dtItem = Format(wsDespesas.Cells(i, 4).Value, "dd/mm/yyyy")
+                descItem = wsDespesas.Cells(i, 2).Value
+                pagadorItem = wsDespesas.Cells(i, 5).Value
+                formaItem = Trim(wsDespesas.Cells(i, 6).Value)
+                
+                If formaItem = "" Then formaItem = "Outros"
+                
+                ' Acumula no Dicionário por Forma de Pagamento
+                If dictFormas.Exists(formaItem) Then
+                    dictFormas(formaItem) = dictFormas(formaItem) + valItem
+                Else
+                    dictFormas.Add formaItem, valItem
+                End If
+                
+                ' Adiciona ao Extrato Detalhado
+                With Me.lstExtrato
+                    .AddItem dtItem
+                    .List(.ListCount - 1, 1) = "Despesa"
+                    .List(.ListCount - 1, 2) = descItem
+                    .List(.ListCount - 1, 3) = pagadorItem
+                    .List(.ListCount - 1, 4) = formaItem
+                    .List(.ListCount - 1, 5) = Format(valItem, "R$ #,##0.00")
+                End With
+            End If
+        End If
+    Next i
+    
+    ' --- 3. POPULAR LISTBOX DE RESUMO POR FORMA DE PAGAMENTO ---
+    Dim key As Variant
+    For Each key In dictFormas.Keys
+        With Me.lstResumoPagamento
+            .AddItem UCase(key)
+            .List(.ListCount - 1, 1) = Format(dictFormas(key), "R$ #,##0.00")
+        End With
+    Next key
+    
+    ' --- 4. ATUALIZAR INDICADORES (KPIs) ---
+    saldo = totReceitas - totDespesas
+    
+    Me.txtTotalReceitas.Text = Format(totReceitas, "R$ #,##0.00")
+    Me.txtTotalDespesas.Text = Format(totDespesas, "R$ #,##0.00")
+    Me.txtSaldoLiquido.Text = Format(saldo, "R$ #,##0.00")
+End Sub
+
+' ==============================================================================
+' EVENTOS DOS BOTÕES
+' ==============================================================================
+Private Sub btnFiltrar_Click()
+    Call FiltrarEDashboard
+End Sub
+
+Private Sub btnLimparFiltros_Click()
+    Me.cboFiltroAno.Value = "TODOS"
+    Me.cboFiltroMes.Value = "TODOS"
+    Me.cboFiltroPagador.Value = "TODOS"
+    Call FiltrarEDashboard
+End Sub
+
+Private Sub btnVoltar_Click()
+    Unload Me
+End Sub

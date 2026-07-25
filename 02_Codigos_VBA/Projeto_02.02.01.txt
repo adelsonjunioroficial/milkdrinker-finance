@@ -1,0 +1,77 @@
+Option Explicit
+
+' Função auxiliar para salvar um item em uma aba dimensão específica
+Private Sub SalvarItem(ByVal nomeAba As String, ByVal valor As String, ByVal nomeCampo As String)
+    Dim ws As Worksheet
+    Dim ultimaLinha As Long
+    Dim i As Long
+    
+    ' Se o campo estiver vazio, ignora
+    If Trim(valor) = "" Then Exit Sub
+    
+    Set ws = ThisWorkbook.Sheets(nomeAba)
+    ultimaLinha = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' Verifica se o item já existe para evitar duplicados
+    For i = 2 To ultimaLinha
+        If UCase(Trim(ws.Cells(i, 1).Value)) = UCase(Trim(valor)) Then
+            MsgBox "O item '" & valor & "' já está cadastrado em " & nomeCampo & "!", vbExclamation, "Aviso"
+            Exit Sub
+        End If
+    Next i
+    
+    ' Insere o novo valor na próxima linha vaga
+    ws.Cells(ultimaLinha + 1, 1).Value = Trim(valor)
+End Sub
+
+' Botão Salvar: Registra tudo o que foi preenchido
+Private Sub btnSalvar_Click()
+    Dim cadastrouAlgo As Boolean
+    cadastrouAlgo = False
+    
+    ' Grava apenas os campos que foram preenchidos
+    If Trim(Me.txtPagador.Text) <> "" Then
+        SalvarItem "dPagador", Me.txtPagador.Text, "Pagador"
+        Me.txtPagador.Text = ""
+        cadastrouAlgo = True
+    End If
+    
+    If Trim(Me.txtPagamento.Text) <> "" Then
+        SalvarItem "dPagamento", Me.txtPagamento.Text, "Pagamento"
+        Me.txtPagamento.Text = ""
+        cadastrouAlgo = True
+    End If
+    
+    If Trim(Me.txtTipoDespesa.Text) <> "" Then
+        SalvarItem "dTipoDespesa", Me.txtTipoDespesa.Text, "Tipo de Despesa"
+        Me.txtTipoDespesa.Text = ""
+        cadastrouAlgo = True
+    End If
+    
+    If Trim(Me.txtTipoReceita.Text) <> "" Then
+        SalvarItem "dTipoReceita", Me.txtTipoReceita.Text, "Tipo de Receita"
+        Me.txtTipoReceita.Text = ""
+        cadastrouAlgo = True
+    End If
+    
+    If cadastrouAlgo Then
+        ThisWorkbook.Save
+        MsgBox "Cadastros salvos com sucesso!", vbInformation, "Sucesso"
+    Else
+        MsgBox "Preencha pelo menos um campo para salvar.", vbExclamation, "Atenção"
+    End If
+End Sub
+
+' Botão para abrir o formulário de Edição/Exclusão (UserForm 05)
+Private Sub btnEditar_Click()
+    ' Unload Me para fechar este ou apenas Me.Hide
+    Me.Hide
+    ' Chama o UserForm 05 assim que ele estiver criado:
+    ' frmEditaDimensao.Show
+    ' Me.Show
+End Sub
+
+' Botão Fechar Seguro
+Private Sub btnFechar_Click()
+    Unload Me
+End Sub

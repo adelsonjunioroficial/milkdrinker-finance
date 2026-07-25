@@ -1,0 +1,116 @@
+Option Explicit
+
+' Carrega as listas dimensionais ao abrir o formulário
+Private Sub UserForm_Initialize()
+    Me.Caption = "MilkDrinker — Lançamento Parcelado / Recorrente"
+    Me.txtData.Text = Format(Date, "dd/mm/yyyy")
+    Me.optParcelado.Value = True
+    
+    ' Preenche as ComboBoxes direto das tabelas dimensão (Chaves Naturais)
+    CarregarCombo "dPagador", Me.cmbPagador
+    CarregarCombo "dPagamento", Me.cmbPagamento
+    CarregarCombo "dTipoDespesa", Me.cmbCategoria
+End Sub
+
+' Lógica principal para gerar as parcelas na tabela fDespesas
+Private Sub btnSalvar_Click()
+    Dim wsFato As Worksheet
+    Dim proxLinha As Long
+    Dim i As Integer
+    Dim qtdVezes As Integer
+    Dim valorTotal As Double
+    Dim valorParcela As Double
+    Dim dataBase As Date
+    Dim dataParcela As Date
+    Dim obsTexto As String
+    
+    ' --- 1. VALIDAÇÕES DOS CAMPOS ---
+    If Not IsDate(Me.txtData.Text) Then
+        MsgBox "Por favor, insira uma data válida.", vbExclamation, "MilkDrinker"
+        Exit Sub
+    End If
+    
+    If Me.cmbPagador.Value = "" Or Me.cmbPagamento.Value = "" Or Me.cmbCategoria.Value = "" Then
+        MsgBox "Preencha todos os campos de categoria, pagador e forma de pagamento.", vbExclamation, "MilkDrinker"
+        Exit Sub
+    End If
+    
+    If Not IsNumeric(Me.txtValor.Text) Or Not IsNumeric(Me.txtQtdParcelas.Text) Then
+        MsgBox "Insira valores numéricos válidos para Valor e Quantidade.", vbExclamation, "MilkDrinker"
+        Exit Sub
+    End If
+    
+    qtdVezes = CInt(Me.txtQtdParcelas.Text)
+    valorTotal = CDbl(Me.txtValor.Text)
+    dataBase = CDate(Me.txtData.Text)
+    
+    If qtdVezes <= 0 Or valorTotal <= 0 Then
+        MsgBox "A quantidade e o valor devem ser maiores que zero.", vbExclamation, "MilkDrinker"
+        Exit Sub
+    End If
+
+    ' --- 2. CÁLCULO DO VALOR POR LINHA ---
+    If Me.optParcelado.Value = True Then
+        ' Exemplo: R$ 1.200 em 12x = R$ 100 por parcela
+        valorParcela = Round(valorTotal / qtdVezes, 2)
+    Else
+        ' Exemplo: Aluguel R$ 1.200 por 12 meses = R$ 1.200 todo mês
+        valorParcela = valorTotal
+    End If
+
+    ' --- 3. GRAVAÇÃO EM CASCATA NA TABELA fDespesas ---
+    'Set wsFato = ThisWorkbook.Sheets("fDespesas")
+    
+    'For i = 1 To qtdVezes
+    ' --- 3. GRAVAÇÃO EM CASCATA NA TABELA fDespesas ---
+    Set wsFato = ThisWorkbook.Sheets("fDespesas")
+    
+    For i = 1 To qtdVezes
+        ' Soma (i - 1) meses à data inicial
+        dataParcela = DateAdd("m", i - 1, dataBase)
+        
+        ' Formata a descrição com o indicador da parcela
+        If Me.optParcelado.Value = True Then
+            obsTexto = Me.txtObservacao.Text & " (Parcela " & i & "/" & qtdVezes & ")"
+        Else
+            obsTexto = Me.txtObservacao.Text & " [Fixo " & i & "/" & qtdVezes & "]"
+        End If
+        
+        ' Encontra a próxima linha livre na tabela fato
+        proxLinha = wsFato.Cells(wsFato.Rows.Count, 1).End(xlUp).Row + 1
+        
+        ' --- GRAVAÇÃO CONFORME A SUA PLANILHA REAL ---
+        wsFato.Cells(proxLinha, 1).Value = Now                                    ' Coluna A: Log (Carimbo de Data/Hora)
+        wsFato.Cells(proxLinha, 2).Value = UCase(obsTexto)                        ' Coluna B: Descricao
+        wsFato.Cells(proxLinha, 3).Value = valorParcela                           ' Coluna C: Valor
+        wsFato.Cells(proxLinha, 4).Value = dataParcela                            ' Coluna D: Data
+        wsFato.Cells(proxLinha, 5).Value = Me.cmbPagador.Value                    ' Coluna E: Pagador
+        wsFato.Cells(proxLinha, 6).Value = Me.cmbPagamento.Value                  ' Coluna F: Pagamento
+        wsFato.Cells(proxLinha, 7).Value = Me.cmbCategoria.Value                  ' Coluna G: Tipo
+        wsFato.Cells(proxLinha, 8).Value = StrConv(Format(dataParcela, "mmmm"), vbProperCase) ' Coluna H: Mês (ex: Julho)
+        wsFato.Cells(proxLinha, 9).Value = Year(dataParcela)                      ' Coluna I: Ano (ex: 2026)
+    Next i
+
+    ' --- 4. FINALIZAÇÃO ---
+    MsgBox "Lançamento de " & qtdVezes & " parcelas/mensalidades realizado com sucesso!", vbInformation, "MilkDrinker"
+    Unload Me
+End Sub
+
+Private Sub btnCancelar_Click()
+    Unload Me
+End Sub
+
+' Função auxiliar para preencher os combos com as chaves naturais
+Private Sub CarregarCombo(nomeTabela As String, combo As ComboBox)
+    Dim ws As Worksheet
+    Dim i As Long
+    Dim ultLinha As Long
+    
+    Set ws = ThisWorkbook.Sheets(nomeTabela)
+    ultLinha = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    combo.Clear
+    For i = 2 To ultLinha
+        combo.AddItem ws.Cells(i, 1).Value
+    Next i
+End Sub
